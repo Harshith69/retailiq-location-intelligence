@@ -1,4 +1,4 @@
-# 📍 RetailIQ — Location Intelligence for Retail Site Selection
+# RetailIQ — Location Intelligence for Retail Site Selection
 
 > **An end-to-end spatial analytics platform that scores every 460m patch of a city for retail expansion potential — powered by H3 hexagonal grids, OpenStreetMap data, and gradient-boosted demand estimation.**
 
@@ -330,7 +330,7 @@ def fetch_from_google_places(api_key: str) -> gpd.GeoDataFrame:
 
 ## Author
 
-**Harshith N Chandan**
+**Harshith**
 Data Scientist & ML Engineer | Geospatial Analytics
 
 ---
