@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
 authors = [
-    {name = "RetailIQ Team"}
+    {name = "Harshith Narasimhamurty"}
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
