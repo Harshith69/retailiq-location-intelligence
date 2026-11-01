@@ -28,15 +28,15 @@ The repository includes ready-to-open HTML maps in `outputs/`. Use **Interactive
 
 | Output | What it shows | Open |
 |---|---|---|
-| Site score map | H3 cells coloured by composite site score and grade | [Interactive preview](https://htmlpreview.github.io/?https://github.com/Harshith69/retailiq-location-intelligence/blob/main/outputs/site_score_map.html) · [Repository file](outputs/site_score_map.html) |
-| Network gap map | Relative demand-versus-supply gap across the study area | [Interactive preview](https://htmlpreview.github.io/?https://github.com/Harshith69/retailiq-location-intelligence/blob/main/outputs/network_gap_map.html) · [Repository file](outputs/network_gap_map.html) |
-| Demand heatmap | Spatial distribution of the modelled demand proxy | [Interactive preview](https://htmlpreview.github.io/?https://github.com/Harshith69/retailiq-location-intelligence/blob/main/outputs/demand_heatmap.html) · [Repository file](outputs/demand_heatmap.html) |
+| Site score map | H3 cells coloured by composite site score and grade | [Interactive preview](https://raw.githack.com/Harshith69/retailiq-location-intelligence/main/outputs/site_score_map.html) · [Repository file](outputs/site_score_map.html) |
+| Network gap map | Relative demand-versus-supply gap across the study area | [Interactive preview](https://raw.githack.com/Harshith69/retailiq-location-intelligence/main/outputs/network_gap_map.html) · [Repository file](outputs/network_gap_map.html) |
+| Demand heatmap | Spatial distribution of the modelled demand proxy | [Interactive preview](https://raw.githack.com/Harshith69/retailiq-location-intelligence/main/outputs/demand_heatmap.html) · [Repository file](outputs/demand_heatmap.html) |
 | Feature importance | Relative contribution of model features | [View PNG](outputs/feature_importance.png) |
 | Grade distribution | Distribution of A–E location grades | [View PNG](outputs/grade_distribution.png) |
 | Score distributions | Distribution of site and gap scores | [View PNG](outputs/score_distributions.png) |
 | Correlation matrix | Pairwise correlations among score components | [View PNG](outputs/correlation_matrix.png) |
 
-> **Map preview note:** The interactive preview links use the third-party HTMLPreview service to render the HTML committed in this repository. The map source files remain hosted in this repository. If the preview service is unavailable, download the repository HTML file and open it locally. Folium basemap tiles are loaded from the configured tile provider, so an internet connection may be required.
+> **Map preview note:** These previews use raw.githack to serve the Folium HTML files with a browser-compatible content type. The maps execute JavaScript and load Leaflet, the heatmap plugin and OpenStreetMap tiles from external services, so an internet connection is required. On the first visit, raw.githack may show a confirmation page before opening the HTML; continue to the page to view the map. If the preview host is unavailable, download the repository HTML file and open it in a browser with internet access.
 
 ### Visual outputs at a glance
 
