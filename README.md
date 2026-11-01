@@ -1,340 +1,288 @@
 # RetailIQ — Location Intelligence for Retail Site Selection
 
-> **An end-to-end spatial analytics platform that scores every 460m patch of a city for retail expansion potential — powered by H3 hexagonal grids, OpenStreetMap data, and gradient-boosted demand estimation.**
+> A geospatial analytics project for exploring retail expansion opportunities across Bengaluru using H3 hexagonal indexing, points of interest, spatial features, demand proxies, network-gap analysis and an interactive Streamlit dashboard.
 
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python&logoColor=white)](https://python.org)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3+-f7931e?logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-ff4b4b?logo=streamlit&logoColor=white)](https://streamlit.io)
-[![H3](https://img.shields.io/badge/Uber_H3-Hexagonal_Grid-1d9bf0)](https://h3geo.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![H3](https://img.shields.io/badge/Spatial%20index-Uber%20H3-1d9bf0)](https://h3geo.org/)
+[![scikit-learn](https://img.shields.io/badge/ML-scikit--learn-f7931e?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+[![Streamlit](https://img.shields.io/badge/App-Streamlit-ff4b4b?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
----
-
-## The Problem
-
-Retail chains expanding into a city face a critical question: **where should the next store go?**
-
-Getting this wrong is expensive — a poorly located store bleeds money for years. Getting it right requires synthesizing population density, commercial activity, road access, competitive landscape, and catchment potential into a single decision.
-
-**RetailIQ solves this.** It ingests open geospatial data, indexes it to a unified hexagonal grid, engineers 26 spatial features per location, trains a demand estimation model, and outputs a composite 0–100 site score with A–E grading for every micro-location in the city.
+**Author: Harshith Narasimhamurty**
 
 ---
 
-## What It Does
+## 1. Project overview
 
-<table>
-<tr>
-<td width="50%">
+RetailIQ is a prototype decision-support workflow for a retail planning question:
 
-### 🗺️ Site Score Map
-Every hexagon scored and graded. Green (A) = prime location, red (E) = avoid. Hover for full score breakdown.
+**Which parts of a city may be worth investigating when selecting the next retail location?**
 
-</td>
-<td width="50%">
+It divides a configured city extent into H3 hexagonal cells and builds spatial indicators for each cell. These indicators are used to estimate a demand proxy, compare demand with nearby commercial supply, and calculate a weighted site-opportunity score. The results can be explored through static interactive maps and a Streamlit dashboard.
 
-### 🔥 Demand Heatmap
-Predicted revenue potential from the gradient-boosted regression model. Hot zones are where money flows.
+The current configuration targets **Bengaluru, India**. This is an analytical prototype, not a substitute for field surveys, commercial due diligence, road-network travel-time analysis or a model trained and validated on actual store sales.
 
-</td>
-</tr>
-<tr>
-<td>
+## 2. Explore the published outputs
 
-### 🕳️ Network Gap Analysis
-Where demand is high but supply is low — the white spaces on the map where a new store would dominate.
+The repository includes ready-to-open HTML maps in `outputs/`. Open the links below to inspect the published artefacts directly on GitHub (use **Download** or **Raw** if your browser does not render the HTML preview).
 
-</td>
-<td>
+| Output | What it shows | Open |
+|---|---|---|
+| Site score map | H3 cells coloured by composite site score and grade | [View HTML map](outputs/site_score_map.html) |
+| Network gap map | Relative demand-versus-supply gap across the study area | [View HTML map](outputs/network_gap_map.html) |
+| Demand heatmap | Spatial distribution of the modelled demand proxy | [View HTML map](outputs/demand_heatmap.html) |
+| Feature importance | Relative contribution of model features | [View PNG](outputs/feature_importance.png) |
+| Grade distribution | Distribution of A–E location grades | [View PNG](outputs/grade_distribution.png) |
+| Score distributions | Distribution of site and gap scores | [View PNG](outputs/score_distributions.png) |
+| Correlation matrix | Pairwise correlations among score components | [View PNG](outputs/correlation_matrix.png) |
 
-### 📊 Per-Site Reports
-Radar charts, feature breakdowns, and competitive benchmarks for any selected hexagon.
+> **Note:** GitHub's standard file viewer may not execute a standalone HTML map. To view it interactively, download the HTML file and open it in a modern browser. The Folium maps may request basemap tiles from their configured tile provider, so an internet connection may be required.
 
-</td>
-</tr>
-</table>
+## 3. Process at a glance
 
----
+The following flow summarises the execution order in the codebase.
 
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        DATA SOURCES                                │
-│  ┌──────────┐  ┌──────────────┐  ┌───────────┐  ┌──────────────┐  │
-│  │ OSM POIs │  │ Kontur Pop.  │  │ Census    │  │ Road Network │  │
-│  │ 8 types  │  │ H3 density   │  │ 2011 demo │  │ OSM ways     │  │
-│  └────┬─────┘  └──────┬───────┘  └─────┬─────┘  └──────┬───────┘  │
-└───────┼───────────────┼────────────────┼───────────────┼───────────┘
-        │               │                │               │
-        ▼               ▼                ▼               ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                    H3 HEXAGONAL GRID (Res 8 — ~460m)               │
-│              All data indexed to 1,237 unified hex cells            │
-└─────────────────────────────┬───────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                     FEATURE ENGINEERING                            │
-│  ┌────────────┐ ┌────────────┐ ┌─────────────┐ ┌──────────────┐   │
-│  │ POI density│ │ Catchment  │ │ Competition │ │ Accessibility│   │
-│  │ (8 types)  │ │ (5 rings)  │ │ index       │ │ score        │   │
-│  └────────────┘ └────────────┘ └─────────────┘ └──────────────┘   │
-│  → 26 features per hexagon                                        │
-└─────────────────────────────┬───────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                      ANALYTICS MODELS                              │
-│  ┌──────────────┐  ┌────────────────┐  ┌───────────────────────┐   │
-│  │ GBR Demand   │  │ Network Gap    │  │ Composite Site Score  │   │
-│  │ Estimation   │  │ Analysis       │  │ (0–100, Grade A–E)    │   │
-│  │ CV R²=0.80   │  │ Demand-Supply  │  │ Weighted: 5 components│   │
-│  └──────────────┘  └────────────────┘  └───────────────────────┘   │
-└─────────────────────────────┬───────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                         OUTPUTS                                    │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
-│  │ Interactive  │  │ Site Reports │  │ Streamlit Dashboard      │  │
-│  │ Folium Maps  │  │ Per-location │  │ 5 tabs, live filtering   │  │
-│  └──────────────┘  └──────────────┘  └──────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[Configure Bengaluru extent and H3 resolution] --> B[Generate H3 hexagonal grid]
+    B --> C[Ingest POIs]
+    C --> D{Data mode}
+    D -->|Default| E[Synthetic POIs, buildings and roads]
+    D -->|--live| F[Live OpenStreetMap POIs]
+    E --> G[Spatial feature engineering]
+    F --> G
+    G --> H[Build feature matrix per H3 cell]
+    H --> I[Train demand-proxy regression model]
+    I --> J[Network gap analysis]
+    J --> K[Composite site score and A–E grade]
+    K --> L[Save processed tables and model artifacts]
+    L --> M[Generate Folium HTML maps and charts]
+    L --> N[Explore results in Streamlit dashboard]
 ```
 
----
+### Base map and spatial layers
 
-## Quick Start
+The analysis is organised around a common H3 grid. The grid provides the spatial key used to aggregate point and line data and to compare neighbouring areas. Folium maps use a street/light basemap layer for context, while the H3 cells carry the analytical values.
 
-```bash
-# Clone
-git clone https://github.com/harshith69/retailiq-location-intelligence.git
+| Spatial layer | Current implementation |
+|---|---|
+| H3 grid | Generated from the configured Bengaluru bounding box at resolution 8 |
+| Points of interest | Synthetic by default; OSM Overpass POIs when `--live` is used |
+| Buildings | Synthetic building points and floor-level proxy |
+| Roads | Synthetic road segments |
+| Population | Building-derived proxy and catchment aggregation; not a direct census population surface |
+
+**Important data qualification:** `--live` currently switches the POI source to OpenStreetMap. It does not make the building, road or population layers live. Kontur population and Census 2011 are mentioned as potential/source context in project documentation but are not currently downloaded and integrated by the supplied pipeline.
+
+## 4. Run the project locally
+
+### Prerequisites
+
+- Python 3.11 or later
+- Git
+- Internet access if you intend to retrieve OpenStreetMap POIs or load external map tiles
+
+### Windows PowerShell
+
+```powershell
+git clone https://github.com/Harshith69/retailiq-location-intelligence.git
 cd retailiq-location-intelligence
 
-# Install
+# Create and activate an isolated environment
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# Upgrade pip and install dependencies
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
-# Run full pipeline (data → features → model → scores)
+# Run the full pipeline (synthetic data by default)
 python run_pipeline.py
 
-# Launch interactive dashboard
+# Generate the static HTML maps and PNG charts
+python -m src.generate_outputs
+
+# Launch the interactive dashboard
 streamlit run src/dashboard.py
+```
 
-# Use live OpenStreetMap data (requires internet)
+### macOS / Linux
+
+```bash
+git clone https://github.com/Harshith69/retailiq-location-intelligence.git
+cd retailiq-location-intelligence
+
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+python run_pipeline.py
+python -m src.generate_outputs
+streamlit run src/dashboard.py
+```
+
+Open the local Streamlit URL printed in the terminal (normally `http://localhost:8501`).
+
+### Use live OpenStreetMap POIs
+
+```bash
 python run_pipeline.py --live
+python -m src.generate_outputs
+streamlit run src/dashboard.py
 ```
 
----
+The Overpass API is a shared public service. Requests can be slow or rate-limited; use the default synthetic mode for repeatable local demonstrations.
 
-## Project Structure
+### Open an existing HTML map without rerunning the pipeline
 
-```
-retailiq-location-intelligence/
-│
-├── README.md                       ← You are here
-├── requirements.txt                ← Python dependencies
-├── run_pipeline.py                 ← One-command pipeline runner
-│
-├── src/
-│   ├── config.py                   ← All parameters: city bounds, H3 res,
-│   │                                  POI categories, score weights
-│   ├── data_ingestion.py           ← H3 grid generation + OSM/synthetic data
-│   ├── feature_engineering.py      ← 26 spatial features per hexagon
-│   ├── models.py                   ← GBR demand model + gap analysis + scoring
-│   ├── dashboard.py                ← Streamlit dashboard (5 tabs)
-│   └── generate_outputs.py         ← Static HTML maps + PNG charts
-│
-├── data/
-│   ├── raw/                        ← Ingested POIs, buildings, roads (GeoJSON)
-│   └── processed/                  ← H3 grid, feature matrix, scores (Parquet)
-│
-└── outputs/
-    ├── site_score_map.html         ← Interactive site score map
-    ├── network_gap_map.html        ← Network gap analysis map
-    ├── demand_heatmap.html         ← Demand estimation heatmap
-    ├── feature_importance.png      ← Top model features
-    ├── grade_distribution.png      ← A–E grade breakdown
-    ├── score_distributions.png     ← Score & gap histograms
-    ├── correlation_matrix.png      ← Score component correlations
-    ├── demand_model.pkl            ← Trained GBR model
-    └── scaler.pkl                  ← Fitted MinMaxScaler
-```
+After downloading/cloning the repository, open any of these files directly in a browser:
 
----
+- `outputs/site_score_map.html`
+- `outputs/network_gap_map.html`
+- `outputs/demand_heatmap.html`
 
-## Technical Deep Dive
+To regenerate the HTML files and charts, first run `python run_pipeline.py`, then run `python -m src.generate_outputs`.
 
-### 1. Spatial Indexing — H3 Hexagonal Grid
+## 5. Methodology
 
-The entire city is tiled into **1,237 hexagonal cells** at H3 resolution 8 (~460m edge length). Hexagons outperform square grids for spatial analytics because:
-- Every neighbor is equidistant (no diagonal bias)
-- Catchment rings are uniform in all directions
-- Hierarchical — zoom in/out by changing resolution
-- Industry standard (used by Uber, Kontur, GeoIQ)
+### 5.1 H3 spatial indexing
 
-```python
-# Generate all H3 cells covering Bangalore
-hex_ids = set()
-for lat in np.arange(12.85, 13.10, 0.002):
-    for lon in np.arange(77.45, 77.75, 0.002):
-        hex_ids.add(h3.latlng_to_cell(lat, lon, 8))
-# → 1,237 hexagons
+The configured Bengaluru bounding box is sampled and mapped to H3 cells at resolution 8. Each cell is represented by an H3 index and polygon geometry. The grid acts as the shared spatial unit for feature aggregation and map visualisation.
+
+### 5.2 Feature engineering
+
+The implementation creates spatial indicators including:
+
+- Building-derived population-density proxy and building-level summaries
+- POI counts by category (restaurants, retail, banks/ATMs, education, healthcare, entertainment, transport and fuel)
+- Catchment aggregates at configured distance bands
+- Road density and road-type-weighted accessibility
+- Competition/supply proxy
+- POI category diversity using Shannon entropy
+- Distance from the configured city centre
+
+The exact feature columns are defined by `src/feature_engineering.py`; the project documentation has referred to 26 features, but this count should be treated as implementation-dependent and verified against the generated feature matrix.
+
+### 5.3 Demand estimation
+
+The modelling module trains a Gradient Boosting regression model on a generated demand/revenue proxy derived from spatial features. This is useful for demonstrating the end-to-end modelling workflow, feature importance and spatial ranking.
+
+**It is not a model of observed retail revenue.** Its evaluation metrics describe performance against synthetic labels and must not be presented as evidence of commercial forecasting accuracy. Replacing the proxy target with verified store-level revenue, footfall or transaction data is required for real-world predictive claims.
+
+### 5.4 Network gap analysis
+
+The project compares normalised demand and supply proxies. The documented gap expression is:
+
+```text
+Gap score = Normalised demand - 0.7 × Normalised supply
 ```
 
-### 2. Feature Engineering — 26 Dimensions per Hexagon
+The resulting value is used to rank areas by relative unmet-demand potential. It is an exploratory index, not a measured market-size estimate.
 
-| # | Feature Group | Features | Method |
-|---|---|---|---|
-| 1 | Population proxy | `pop_density_proxy`, `building_count`, `avg_levels` | Building footprint count × floor levels |
-| 2 | POI density | 8 category counts + `poi_total_count` | Spatial join: POI → containing hexagon |
-| 3 | Catchment population | 5 ring sums (0.5–5 km) | H3 `grid_disk(k)` neighbor aggregation |
-| 4 | Road accessibility | `road_density`, `weighted_road_access` | Road clipping to hex + type weighting |
-| 5 | Competition | `competition_index` | POI count ÷ population (market saturation) |
-| 6 | Diversity | `poi_diversity_score` | Shannon entropy across 8 POI categories |
-| 7 | Centrality | `dist_to_center_km` | Haversine distance to CBD |
+### 5.5 Composite site score
 
-### 3. Demand Estimation — Gradient Boosted Regression
+The configured score combines five components:
 
-The model predicts revenue potential per hexagon, mirroring how GeoIQ trains regression models on actual store performance data (as documented in their Lenskart case study).
+| Component | Weight | Interpretation |
+|---|---:|---|
+| Demand | 30% | Demand-proxy model output |
+| Catchment | 25% | Nearby population/building proxy |
+| Accessibility | 15% | Road-related indicator |
+| Competition (inverse) | 15% | Lower estimated supply can improve score |
+| POI diversity | 15% | Variety of surrounding POI categories |
+| **Total** | **100%** | |
 
-```
-Model:              GradientBoostingRegressor
-Estimators:         200 trees, max_depth=5, lr=0.1
-Train R²:           0.9816
-Test R²:            0.7607
-5-Fold CV R²:       0.8005 ± 0.0173
-Test MAE:           ₹123,850
-```
+The score is scaled to 0–100 and categorised into grades A–E. Refer to `src/models.py` and `src/config.py` for the executable definitions and thresholds.
 
-**Top features by importance:**
-1. `catchment_pop_2km` — 51.2%
-2. `catchment_pop_5km` — 9.5%
-3. `catchment_pop_1km` — 7.8%
-4. `catchment_pop_0.5km` — 5.9%
-5. `dist_to_center_km` — 4.1%
+## 6. Dashboard
 
-Catchment population dominates — the number of people reachable within 2 km is the single strongest predictor of retail demand.
+The Streamlit dashboard in `src/dashboard.py` presents five views:
 
-### 4. Network Gap Analysis
+1. **Site Scores** — H3 cells coloured by composite score.
+2. **Demand Heatmap** — spatial view of demand-proxy estimates.
+3. **Network Gaps** — relative demand/supply gap areas.
+4. **Analytics** — distributions, component correlations and leading cells.
+5. **Site Report** — selected-cell score components and feature details.
 
-Identifies underserved locations by comparing predicted demand against existing commercial supply:
-
-```
-Gap Score = Normalized Demand − 0.7 × Normalized Supply
-```
-
-| Gap Category | Hexagons | Interpretation |
-|---|---|---|
-| Very High | 72 | Prime expansion targets |
-| High | 505 | Strong opportunity zones |
-| Moderate | 634 | Established but room to grow |
-| Low | 25 | Saturated — avoid |
-
-### 5. Composite Site Scoring
-
-Each hexagon gets a **0–100 score** from five weighted components:
-
-| Component | Weight | What It Captures |
-|---|---|---|
-| Demand Score | 30% | Predicted revenue potential |
-| Catchment Score | 25% | Population within 3 km |
-| Accessibility Score | 15% | Road network density |
-| Competition Score (inverse) | 15% | Lower competition = higher score |
-| POI Diversity Score | 15% | Ecosystem health (Shannon entropy) |
-
-**Grade distribution:**
-| Grade | Score Range | Count | Meaning |
-|---|---|---|---|
-| A | 85–100 | 18 | Best locations in the city |
-| B | 70–85 | 87 | Strong locations |
-| C | 50–70 | 236 | Average — viable with strategy |
-| D | 30–50 | 666 | Below average |
-| E | 0–30 | 230 | Avoid |
-
----
-
-## Data Sources
-
-| Source | What | Resolution | Usage |
-|---|---|---|---|
-| **OpenStreetMap** (Overpass API) | POIs, buildings, roads | Point / line | Commercial activity, population proxy, accessibility |
-| **Kontur Population** | Population density | H3 res-8 (~400m) | Catchment population (production) |
-| **India Census 2011** | Demographics | Ward / district | Baseline demographics |
-
-The pipeline ships with a **synthetic data generator** that mirrors real Bangalore spatial patterns (POI clustering around Koramangala, Indiranagar, Whitefield, etc.) for demonstration. The `--live` flag activates the Overpass API pipeline for real OSM data.
-
----
-
-## Streamlit Dashboard
-
-The interactive dashboard has 5 tabs:
-
-1. **🗺️ Site Scores** — H3 hexagonal map colored by composite score (A–E)
-2. **🔥 Demand Heatmap** — Predicted demand intensity visualization
-3. **🕳️ Network Gaps** — Underserved areas for expansion targeting
-4. **📊 Analytics** — Score distributions, correlations, top sites table
-5. **📋 Site Report** — Per-hexagon deep dive with radar chart
+Start it with:
 
 ```bash
 streamlit run src/dashboard.py
 ```
 
----
+The dashboard expects the processed Parquet files produced by the pipeline to exist.
 
-## Tech Stack
+## 7. Repository structure
 
-| Layer | Tools |
+```text
+retailiq-location-intelligence/
+├── README.md
+├── LICENSE
+├── requirements.txt
+├── pyproject.toml
+├── run_pipeline.py
+├── src/
+│   ├── config.py                 # Study area, H3 and modelling parameters
+│   ├── data_ingestion.py         # H3 grid and spatial data ingestion/generation
+│   ├── feature_engineering.py    # Spatial aggregation and feature matrix
+│   ├── models.py                 # Demand proxy, gap analysis and site scoring
+│   ├── generate_outputs.py       # Folium HTML maps and analytical charts
+│   └── dashboard.py              # Streamlit exploration interface
+├── data/
+│   ├── raw/                      # Generated/downloaded spatial inputs
+│   └── processed/                # Grid, feature matrix and scores
+└── outputs/
+    ├── site_score_map.html
+    ├── network_gap_map.html
+    ├── demand_heatmap.html
+    ├── feature_importance.png
+    ├── grade_distribution.png
+    ├── score_distributions.png
+    └── correlation_matrix.png
+```
+
+Generated data and model files are created when the pipeline runs; they may not all be committed to version control.
+
+## 8. Main code entry points
+
+| File | Responsibility |
 |---|---|
-| **Spatial** | H3-py, GeoPandas, Shapely, Folium |
-| **Data** | Pandas, NumPy, Parquet, GeoJSON |
-| **ML** | scikit-learn (GBR), MinMaxScaler, cross_val_score |
-| **Viz** | Matplotlib, Seaborn, Folium HeatMap |
-| **App** | Streamlit, streamlit-folium |
-| **Data sources** | OpenStreetMap (Overpass API), Kontur |
+| `run_pipeline.py` | Orchestrates ingestion, features and modelling |
+| `src/config.py` | Central project configuration |
+| `src/data_ingestion.py` | H3 grid, synthetic layers and OSM POI retrieval |
+| `src/feature_engineering.py` | Spatial joins, H3 aggregation and feature creation |
+| `src/models.py` | Demand proxy model, gap calculations and score grades |
+| `src/generate_outputs.py` | Static interactive maps and PNG outputs |
+| `src/dashboard.py` | Streamlit dashboard |
 
----
+## 9. Current limitations and next improvements
 
-## Extending the Project
+- The default data path is synthetic; only POIs switch to live OSM in live mode.
+- The demand target is synthetic and should be replaced with an observed business outcome before commercial use.
+- Catchment aggregation uses H3 neighbourhood logic; validate the resulting distances against exact geodesic or network-based catchments for deployment.
+- Random train/test splits can overstate performance where nearby cells are spatially correlated; spatial block validation is recommended.
+- Fit preprocessing transformations on training data only to avoid leakage.
+- Pin and test a compatible dependency set. The source uses H3 v4-style API names, while the current requirements file pins H3 3.7.7; reconcile this before installing/running in a clean environment.
+- Add automated unit/integration tests for ingestion, feature schema, scoring bounds and reproducibility.
+- A future production version should integrate authoritative population data, real road networks/travel times, observed store performance and data provenance.
 
-RetailIQ is designed to be modular. Here's how to extend it:
+## 10. Data sources and references
 
-**Add a new city:**
-```python
-# In config.py — change the bounding box and center
-CITY_NAME = "Mumbai"
-CITY_BBOX = {"south": 18.88, "north": 19.28, "west": 72.77, "east": 72.98}
-CITY_CENTER = (19.0760, 72.8777)
-```
+- [OpenStreetMap](https://www.openstreetmap.org/) — volunteered geographic data.
+- [Overpass API](https://overpass-api.de/) — query interface used by the live POI ingestion path.
+- [H3 documentation](https://h3geo.org/) — hierarchical hexagonal spatial indexing.
+- [GeoPandas documentation](https://geopandas.org/) — geospatial data processing.
+- [scikit-learn documentation](https://scikit-learn.org/stable/) — regression and model evaluation.
+- [Folium documentation](https://python-visualization.github.io/folium/) — interactive Leaflet map generation.
+- [Streamlit documentation](https://docs.streamlit.io/) — dashboard framework.
 
-**Add a new data source:**
-```python
-# Any source that outputs (lat, lon, category) can be plugged in
-# Just add a new function in data_ingestion.py that returns a GeoDataFrame
-def fetch_from_google_places(api_key: str) -> gpd.GeoDataFrame:
-    # ... fetch and return same schema as fetch_pois()
-```
-
-**Add a new feature:**
-```python
-# Add computation in feature_engineering.py, join to the feature matrix
-# The model retrains automatically on the expanded feature set
-```
-
-**Swap in real revenue data:**
-```python
-# Replace generate_training_labels() in models.py with actual
-# store-level revenue data — the rest of the pipeline stays identical
-```
-
----
+OpenStreetMap data is made available under the [Open Database Licence (ODbL)](https://www.openstreetmap.org/copyright). Review the applicable attribution and licence obligations when redistributing OSM-derived data or outputs.
 
 ## Author
 
-**Harshith**
-Data Scientist & ML Engineer | Geospatial Analytics
-
----
+**Harshith Narasimhamurty**
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+This project is distributed under the MIT License. See [LICENSE](LICENSE).
