@@ -24,19 +24,31 @@ The current configuration targets **Bengaluru, India**. This is an analytical pr
 
 ## 2. Explore the published outputs
 
-The repository includes ready-to-open HTML maps in `outputs/`. Open the links below to inspect the published artefacts directly on GitHub (use **Download** or **Raw** if your browser does not render the HTML preview).
+The repository includes ready-to-open HTML maps in `outputs/`. Use **Interactive preview** to view each map in a browser through HTMLPreview, or **Repository file** to inspect/download the original HTML.
 
 | Output | What it shows | Open |
 |---|---|---|
-| Site score map | H3 cells coloured by composite site score and grade | [View HTML map](outputs/site_score_map.html) |
-| Network gap map | Relative demand-versus-supply gap across the study area | [View HTML map](outputs/network_gap_map.html) |
-| Demand heatmap | Spatial distribution of the modelled demand proxy | [View HTML map](outputs/demand_heatmap.html) |
+| Site score map | H3 cells coloured by composite site score and grade | [Interactive preview](https://htmlpreview.github.io/?https://github.com/Harshith69/retailiq-location-intelligence/blob/main/outputs/site_score_map.html) · [Repository file](outputs/site_score_map.html) |
+| Network gap map | Relative demand-versus-supply gap across the study area | [Interactive preview](https://htmlpreview.github.io/?https://github.com/Harshith69/retailiq-location-intelligence/blob/main/outputs/network_gap_map.html) · [Repository file](outputs/network_gap_map.html) |
+| Demand heatmap | Spatial distribution of the modelled demand proxy | [Interactive preview](https://htmlpreview.github.io/?https://github.com/Harshith69/retailiq-location-intelligence/blob/main/outputs/demand_heatmap.html) · [Repository file](outputs/demand_heatmap.html) |
 | Feature importance | Relative contribution of model features | [View PNG](outputs/feature_importance.png) |
 | Grade distribution | Distribution of A–E location grades | [View PNG](outputs/grade_distribution.png) |
 | Score distributions | Distribution of site and gap scores | [View PNG](outputs/score_distributions.png) |
 | Correlation matrix | Pairwise correlations among score components | [View PNG](outputs/correlation_matrix.png) |
 
-> **Note:** GitHub's standard file viewer may not execute a standalone HTML map. To view it interactively, download the HTML file and open it in a modern browser. The Folium maps may request basemap tiles from their configured tile provider, so an internet connection may be required.
+> **Map preview note:** The interactive preview links use the third-party HTMLPreview service to render the HTML committed in this repository. The map source files remain hosted in this repository. If the preview service is unavailable, download the repository HTML file and open it locally. Folium basemap tiles are loaded from the configured tile provider, so an internet connection may be required.
+
+### Visual outputs at a glance
+
+The following figures are available directly in the repository. The interactive map links above provide the geographic context and basemap.
+
+![Feature importance](outputs/feature_importance.png)
+
+![Grade distribution](outputs/grade_distribution.png)
+
+![Score distributions](outputs/score_distributions.png)
+
+![Correlation matrix](outputs/correlation_matrix.png)
 
 ## 3. Process at a glance
 
